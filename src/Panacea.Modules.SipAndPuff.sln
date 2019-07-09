@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.705
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Panacea.Modules.SipAndPuff", "Panacea.Modules.SipAndPuff\Panacea.Modules.SipAndPuff.csproj", "{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}.Debug|x64.ActiveCfg = Debug|x64
+		{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}.Debug|x64.Build.0 = Debug|x64
+		{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}.Debug|x86.ActiveCfg = Debug|x86
+		{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}.Debug|x86.Build.0 = Debug|x86
+		{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}.Release|x64.ActiveCfg = Release|x64
+		{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}.Release|x64.Build.0 = Release|x64
+		{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}.Release|x86.ActiveCfg = Release|x86
+		{00EA80C2-5F8E-4B43-AF2D-4514AA513AFC}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CA88ED0C-8318-4CB1-B144-16B9FDCB0F74}
+	EndGlobalSection
+EndGlobal
