@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -90,71 +92,85 @@ namespace Panacea.Modules.SipAndPuff
             ElementTreeChanged?.Invoke(this, tree);
         }
 
-        private AutomationElement GetTopLevelWindow(AutomationElement element)
+        static readonly object _lock = new object();
+        private AutomationElement GetTopLevelWindow(AutomationElement element, CancellationTokenSource cts)
         {
-            TreeWalker walker = TreeWalker.ControlViewWalker;
-            AutomationElement elementParent;
-            AutomationElement node = element;
-            AutomationElement elementRoot = null;
-            if (node == elementRoot) return node;
-            do
+            lock (_lock)
             {
+                TreeWalker walker = TreeWalker.ControlViewWalker;
+
+
+                while (!cts.IsCancellationRequested && element != null && element.Current.ControlType.ProgrammaticName != ControlType.Window.ProgrammaticName)
+                {
+                    try
+                    {
+                        element = walker.GetParent(element);
+                    }
+                    catch (ElementNotAvailableException)
+                    { }
+                    catch (NullReferenceException)
+                    {
+
+                    }
+                }
+
                 try
                 {
-                    if (node == null) break;
-
-                    elementParent = walker.GetParent(node);
-                    if (elementParent == AutomationElement.RootElement) break;
-
-                    node = elementParent;
+                    Debug.WriteLine("Top Level: " + element.Current.Name);
                 }
-                catch (ElementNotAvailableException)
-                { }
+                catch { }
+                return element;
             }
-            while (true);
-            try
-            {
-                Console.WriteLine("Top Level: " + node.Current.ControlType?.ProgrammaticName.ToString());
-            }
-            catch { }
-            return node;
         }
 
+        CancellationTokenSource _focusSource;
         private async void OnFocusChanged(object sender, AutomationFocusChangedEventArgs e)
         {
+            _focusSource?.Cancel();
+            var source = new CancellationTokenSource();
+            _focusSource = source;
             await Task.Run(async () =>
             {
-                Console.WriteLine("focus changed");
-
-                var focusedElement = sender as AutomationElement;
-                if (focusedElement == null) return;
-                var window = GetTopLevelWindow(focusedElement);
-                if (window == null)
-                {
-                    Console.WriteLine("Null window");
-                    return;
-                }
-                if (_focusedWindow == window)
-                {
-                    Console.WriteLine("Same window");
-                    return;
-                }
                 try
                 {
-                    if (_focusedWindow != null)
-                        Automation.RemoveStructureChangedEventHandler(_focusedWindow, OnStructureChanged);
+                    if (source.IsCancellationRequested) return;
+                    Debug.WriteLine("focus changed");
+                   
+                    var focusedElement = sender as AutomationElement;
+                    if (focusedElement == null) return;
+                    var window = GetTopLevelWindow(focusedElement, source);
+                    if (source.IsCancellationRequested) return;
+                    if (window == null)
+                    {
+                        Debug.WriteLine("Null window");
+                        return;
+                    }
+                    if (_focusedWindow == window)
+                    {
+                        Debug.WriteLine("Same window");
+                        //return;
+                    }
+                    try
+                    {
+                        if (_focusedWindow != null)
+                            Automation.RemoveStructureChangedEventHandler(_focusedWindow, OnStructureChanged);
 
+                    }
+                    catch (ArgumentException ex)
+                    {
+
+                    }
+
+                    _focusedWindow = window;
+                    FocusedWindowChanged?.Invoke(this, _focusedWindow);
+
+                    await Update();
+                    Automation.AddStructureChangedEventHandler(_focusedWindow, TreeScope.Subtree, OnStructureChanged);
                 }
-                catch (ArgumentException ex)
+                catch (COMException)
                 {
 
                 }
-
-                _focusedWindow = window;
-                FocusedWindowChanged?.Invoke(this, _focusedWindow);
-
-                await Update();
-                Automation.AddStructureChangedEventHandler(_focusedWindow, TreeScope.Subtree, OnStructureChanged);
             });
 
         }
@@ -173,7 +189,7 @@ namespace Panacea.Modules.SipAndPuff
 
             await Update();
 
-            Console.WriteLine("structure");
+            Debug.WriteLine("structure");
         }
     }
 }

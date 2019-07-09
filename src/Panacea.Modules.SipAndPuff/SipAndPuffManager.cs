@@ -115,8 +115,8 @@ namespace Panacea.Modules.SipAndPuff
                     {
                         _history.Clear();
                     }
-                    Console.WriteLine("History Size: " + _history.Count);
-                    SelectedCommand = selected.Parent;
+                    Debug.WriteLine("History Size: " + _history.Count);
+                    SelectedCommand = selected?.Parent;
                     SelectedItem = selected;//
                     
          

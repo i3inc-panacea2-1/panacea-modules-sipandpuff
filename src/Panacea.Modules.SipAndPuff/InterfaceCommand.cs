@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -31,7 +32,7 @@ namespace Panacea.Modules.SipAndPuff
                     {
                         try
                         {
-                            Console.WriteLine(element.Current.ControlType.ProgrammaticName);
+                            Debug.WriteLine(element.Current.ControlType.ProgrammaticName);
                             if (element.Current.ControlType == ControlType.Button)
                             {
                                 var com = element.GetCurrentPattern(InvokePattern.Pattern) as InvokePattern;
@@ -50,12 +51,16 @@ namespace Panacea.Modules.SipAndPuff
                         {
 
                         }
+                        catch (ElementNotEnabledException)
+                        {
+
+                        }
                     });
                    
                 }
                 else
                 {
-                    Console.WriteLine("Inspect");
+                    Debug.WriteLine("Inspect");
                     Inspect?.Invoke(this, (parameter as Tree<InterfaceCommand>));
                 }
             });
