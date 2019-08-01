@@ -1,28 +1,30 @@
-﻿using Gma.System.MouseKeyHook;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Forms;
-using System.Windows.Input;
 
 namespace Panacea.Modules.SipAndPuff
 {
 
     internal class SipAndPuffManager : INotifyPropertyChanged
     {
+        int _step = 1;
+        int _max = 8;
+        private readonly Stopwatch _stopwatch = new Stopwatch();
+        System.Timers.Timer _mouseTimer = new System.Timers.Timer();
+        System.Timers.Timer _scrollTimer = new System.Timers.Timer();
         private const Keys KEY_MOVE = Keys.Up;
         private const Keys KEY_SELECT = Keys.Down;
         private static readonly object _lock = new object();
-        private readonly KeyboardHelper _keyboardHelper = new KeyboardHelper(KEY_MOVE, KEY_SELECT, 500);
-        private readonly AutomationHelper _automationHelper = new AutomationHelper();
+        //private readonly KeyboardHelper _keyboardHelper = new KeyboardHelper(KEY_MOVE, KEY_SELECT, 500);
+        //private readonly AutomationHelper _automationHelper = new AutomationHelper();
         private OverlayWindow _overlay = new OverlayWindow();
 
         Tree<InterfaceCommand> _selectedCommand;
@@ -49,33 +51,188 @@ namespace Panacea.Modules.SipAndPuff
             }
         }
 
+        ISipAndPuffInput _sharpDx;
         public SipAndPuffManager()
         {
-            _keyboardHelper.Back += _keyboardHelper_Back;
-            _keyboardHelper.Next += _keyboardHelper_Next;
-            _keyboardHelper.Previous += _keyboardHelper_Previous;
-            _keyboardHelper.Select += _keyboardHelper_Select;
-           
+            _mouseTimer.Elapsed += _mouseTimer_Elapsed;
+            _mouseTimer.Interval = 18;
 
-            _automationHelper.ElementTreeChanged += _automationHelper_ElementTreeChanged;
-            _automationHelper.FocusedWindowChanged += _automationHelper_FocusedWindowChanged;
-            
+            _scrollTimer.Elapsed += _scrollTimer_Elapsed;
+            _scrollTimer.Interval = 300;
+            _sharpDx = new SharpDxHelper();
+            _sharpDx.PuffDown += _sharpDx_PuffDown;
+            _sharpDx.PuffUp += _sharpDx_PuffUp;
+            _sharpDx.SipDown += _sharpDx_SipDown;
+            _sharpDx.SipUp += _sharpDx_SipUp;
+
+            //_automationHelper.ElementTreeChanged += _automationHelper_ElementTreeChanged;
+            //_automationHelper.FocusedWindowChanged += _automationHelper_FocusedWindowChanged;
+
+        }
+
+        private void _scrollTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)(dx > 0 ? -120 : 120), 0);
+        }
+
+        private void _mouseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            var p = Cursor.Position;
+            Cursor.Position = new System.Drawing.Point(p.X + x, p.Y + y);
+            if (_stopwatch.ElapsedMilliseconds > 1000)
+            {
+                _stopwatch.Reset();
+                if (x != 0 && Math.Abs(x) < _max)
+                {
+                    if (x > 0)
+                        x++;
+                    else
+                        x--;
+
+                }
+                if (y != 0 && Math.Abs(y) < _max)
+                {
+                    if (y > 0)
+                        y++;
+                    else
+                        y--;
+                }
+                _stopwatch.Start();
+            }
+        }
+
+        private void _sharpDx_SipUp(object sender, EventArgs e)
+        {
+            _sipDown = false;
+            _mouseTimer.Stop();
+            _scrollTimer.Stop();
+        }
+
+        private async void _sharpDx_SipDown(object sender, EventArgs e)
+        {
+            _sipDown = true;
+            _sipDownCount++;
+            var count = _sipDownCount;
+
+            await Task.Delay(400);
+
+            if (count == _sipDownCount)
+            {
+                if (count == 1 && !_sipDown)
+                {
+                    DoMouseClick();
+                    _puffDownCount = 0;
+                }
+                else if (_sipDownCount == 1 && _sipDown)
+                {
+                    x = -_step;
+                    y = 0;
+                    _stopwatch.Reset();
+                    _stopwatch.Start();
+                    _mouseTimer.Start();
+                }
+                else if (_sipDownCount == 2 && _sipDown)
+                {
+                    x = 0;
+                    y = -_step;
+                    _stopwatch.Reset();
+                    _stopwatch.Start();
+                    _mouseTimer.Start();
+                }
+                else if (_sipDown)
+                {
+                    dx = -1;
+                    _scrollTimer.Start();
+                }
+                _sipDownCount = 0;
+            }
+        }
+
+        bool _puffDown = false, _sipDown = false;
+        private void _sharpDx_PuffUp(object sender, EventArgs e)
+        {
+            _puffDown = false;
+            _mouseTimer.Stop();
+            _scrollTimer.Stop();
+        }
+
+        int _puffDownCount, _sipDownCount;
+        int x, y, dx, dy;
+        private async void _sharpDx_PuffDown(object sender, EventArgs e)
+        {
+            _puffDown = true;
+            _puffDownCount++;
+            var count = _puffDownCount;
+
+            await Task.Delay(400);
+
+            if (count == _puffDownCount)
+            {
+                if (count == 1 && !_puffDown)
+                {
+                    DoMouseClick();
+                    _puffDownCount = 0;
+                }
+                else if (_puffDownCount == 1 && _puffDown)
+                {
+                    x = _step;
+                    y = 0;
+                    _stopwatch.Reset();
+                    _stopwatch.Start();
+                    _mouseTimer.Start();
+                }
+                else if (_puffDownCount == 2 && _puffDown)
+                {
+                    x = 0;
+                    y = _step;
+                    _stopwatch.Reset();
+                    _stopwatch.Start();
+                    _mouseTimer.Start();
+                }
+                else if (_puffDown)
+                {
+                    dx = 1;
+                    _scrollTimer.Start();
+                }
+                _puffDownCount = 0;
+            }
         }
 
         public void Start()
         {
             ScreenReader.Activate();
             Debug.WriteLine(ScreenReader.IsScreenReaderRunning());
-            _automationHelper.Start();
-            _keyboardHelper.Start();
+            //_automationHelper.Start();
+            _sharpDx.Start();
+
+            //_keyboardHelper.Start();
         }
 
         public void Stop()
         {
             ScreenReader.Deactivate();
             Debug.WriteLine(ScreenReader.IsScreenReaderRunning());
-            _automationHelper.Stop();
-            _keyboardHelper.Stop();
+            //_automationHelper.Stop();
+            //_keyboardHelper.Stop();
+            _sharpDx.Stop();
+        }
+
+        [DllImport("user32.dll")]
+        static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, int dwExtraInfo);
+
+        private const int MOUSEEVENTF_LEFTDOWN = 0x02;
+        private const int MOUSEEVENTF_LEFTUP = 0x04;
+        private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
+        private const int MOUSEEVENTF_RIGHTUP = 0x10;
+        private const int MOUSEEVENTF_WHEEL = 0x0800;
+
+
+        public void DoMouseClick()
+        {
+            //Call the imported function with the cursor's current position
+            int X = Cursor.Position.X;
+            int Y = Cursor.Position.Y;
+            mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, X, Y, 0, 0);
         }
 
         private void _automationHelper_FocusedWindowChanged(object sender, AutomationElement e)
@@ -118,8 +275,8 @@ namespace Panacea.Modules.SipAndPuff
                     Debug.WriteLine("History Size: " + _history.Count);
                     SelectedCommand = selected?.Parent;
                     SelectedItem = selected;//
-                    
-         
+
+
                     if (commands != null) _overlay.Show();
                 }
             });
@@ -136,29 +293,7 @@ namespace Panacea.Modules.SipAndPuff
             return null;
         }
 
-        private void _keyboardHelper_Back(object sender, EventArgs e)
-        {
-            var comm = SelectedCommand;
-            _history.Remove(comm);
-            SelectedCommand = SelectedCommand.Parent ?? SelectedCommand;
-            SelectedItem = comm;
-        }
 
-        private void _keyboardHelper_Select(object sender, EventArgs e)
-        {
-            if (SelectedItem == null) return;
-            SelectedItem?.Value?.Command?.Execute(SelectedItem);
-        }
-
-        private void _keyboardHelper_Previous(object sender, EventArgs e)
-        {
-            Move(-1);
-        }
-
-        private void _keyboardHelper_Next(object sender, EventArgs e)
-        {
-            Move(1);
-        }
 
         private void Move(int count)
         {

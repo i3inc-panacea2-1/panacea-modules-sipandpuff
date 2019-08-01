@@ -186,8 +186,11 @@ namespace Panacea.Modules.SipAndPuff
             var cts = _cts;
             await Task.Delay(100);
             if (cts.IsCancellationRequested) return;
-
-            await Update();
+            try
+            {
+                await Update();
+            }
+            catch { }
 
             Debug.WriteLine("structure");
         }
