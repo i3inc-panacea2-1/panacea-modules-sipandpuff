@@ -26,77 +26,86 @@ namespace Panacea.Modules.SipAndPuff
 
         public void Start()
         {
-            var directInput = new DirectInput();
 
-            // Find a Joystick Guid
-            var joystickGuid = Guid.Empty;
-
-            foreach (var deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Gamepad, DeviceEnumerationFlags.AllDevices))
-                joystickGuid = deviceInstance.InstanceGuid;
-
-            // If Gamepad not found, look for a Joystick
-            if (joystickGuid == Guid.Empty)
-                foreach (var deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Joystick, DeviceEnumerationFlags.AllDevices))
-                    joystickGuid = deviceInstance.InstanceGuid;
-
-            // If Joystick not found, throws an error
-            if (joystickGuid == Guid.Empty)
-            {
-                Debug.WriteLine("No joystick/Gamepad found.");
-                return;
-            }
-
-            // Instantiate the joystick
-            var joystick = new Joystick(directInput, joystickGuid);
-
-            Console.WriteLine("Found Joystick/Gamepad with GUID: {0}", joystickGuid);
-
-            // Query all suported ForceFeedback effects
-            var allEffects = joystick.GetEffects();
-            foreach (var effectInfo in allEffects)
-                Console.WriteLine("Effect available {0}", effectInfo.Name);
-
-            // Set BufferSize in order to use buffered data.
-            joystick.Properties.BufferSize = 128;
-
-            // Acquire the joystick
-            joystick.Acquire();
             _stopped = false;
             _thread = new Thread(async () =>
             {
-                while (!_stopped)
+                try
                 {
-                    joystick.Poll();
+                    var directInput = new DirectInput();
 
-                    var datas = joystick.GetBufferedData();
-                    foreach (var state in datas)
+                    // Find a Joystick Guid
+                    var joystickGuid = Guid.Empty;
+
+                    foreach (var deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Gamepad, DeviceEnumerationFlags.AllDevices))
+                        joystickGuid = deviceInstance.InstanceGuid;
+
+                    // If Gamepad not found, look for a Joystick
+                    if (joystickGuid == Guid.Empty)
+                        foreach (var deviceInstance in directInput.GetDevices(SharpDX.DirectInput.DeviceType.Joystick, DeviceEnumerationFlags.AllDevices))
+                            joystickGuid = deviceInstance.InstanceGuid;
+
+                    // If Joystick not found, throws an error
+                    if (joystickGuid == Guid.Empty)
                     {
-                        switch (state.Offset)
-                        {
-                            case JoystickOffset.Buttons0:
-                                if (state.Value == 0)
-                                {
-                                    SipUp?.Invoke(this, null);
-                                }
-                                else
-                                {
-                                    SipDown?.Invoke(this, null);
-                                }
-                                break;
-                            case JoystickOffset.Buttons1:
-                                if (state.Value == 0)
-                                {
-                                    PuffUp?.Invoke(this, null);
-                                }
-                                else
-                                {
-                                    PuffDown?.Invoke(this, null);
-                                }
-                                break;
-                        }
+                        Debug.WriteLine("No joystick/Gamepad found.");
+                        return;
                     }
-                    Thread.Sleep(30);
+
+                    // Instantiate the joystick
+                    var joystick = new Joystick(directInput, joystickGuid);
+
+                    Console.WriteLine("Found Joystick/Gamepad with GUID: {0}", joystickGuid);
+
+                    // Query all suported ForceFeedback effects
+                    var allEffects = joystick.GetEffects();
+                    foreach (var effectInfo in allEffects)
+                        Console.WriteLine("Effect available {0}", effectInfo.Name);
+
+                    // Set BufferSize in order to use buffered data.
+                    joystick.Properties.BufferSize = 128;
+
+                    // Acquire the joystick
+                    joystick.Acquire();
+                    while (!_stopped)
+                    {
+                        joystick.Poll();
+
+                        var datas = joystick.GetBufferedData();
+                        foreach (var state in datas)
+                        {
+                           
+                            if (state.RawOffset > 10)
+                            {
+                                switch (state.Offset)
+                                {
+                                    case JoystickOffset.Buttons0:
+                                        if (state.Value == 0)
+                                        {
+                                            SipUp?.Invoke(this, null);
+                                        }
+                                        else
+                                        {
+                                            SipDown?.Invoke(this, null);
+                                        }
+                                        break;
+                                    case JoystickOffset.Buttons1:
+                                        if (state.Value == 0)
+                                        {
+                                            PuffUp?.Invoke(this, null);
+                                        }
+                                        else
+                                        {
+                                            PuffDown?.Invoke(this, null);
+                                        }
+                                        break;
+                                }
+                            }
+                        }
+                        Thread.Sleep(30);
+                    }
                 }
+                catch { }
             })
             {
                 Priority = ThreadPriority.Lowest
