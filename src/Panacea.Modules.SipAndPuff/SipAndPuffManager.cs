@@ -114,7 +114,7 @@ namespace Panacea.Modules.SipAndPuff
             _sipDownCount++;
             var count = _sipDownCount;
 
-            await Task.Delay(400);
+            await Task.Delay(1000);
 
             if (count == _sipDownCount)
             {
@@ -164,7 +164,7 @@ namespace Panacea.Modules.SipAndPuff
             _puffDownCount++;
             var count = _puffDownCount;
 
-            await Task.Delay(400);
+            await Task.Delay(1000);
 
             if (count == _puffDownCount)
             {
