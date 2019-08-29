@@ -1,0 +1,42 @@
+﻿<Window
+    x:Class="Panacea.Modules.SipAndPuff.HintWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Panacea.Modules.SipAndPuff"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="HintWindow"
+    Width="30"
+    Height="30"
+    AllowsTransparency="True"
+    Background="Transparent"
+    ResizeMode="NoResize"
+    ShowActivated="False"
+    Topmost="True"
+    WindowState="Normal"
+    WindowStyle="None"
+    ShowInTaskbar="False"
+    mc:Ignorable="d">
+    <Grid>
+        <Border
+            Name="puff"
+            Height="{Binding RelativeSource={RelativeSource Self}, Path=ActualWidth}"
+            Background="DodgerBlue"
+            BorderBrush="Black"
+            BorderThickness="3"
+            CornerRadius="99999" />
+        <Border
+            Name="sip"
+            Height="{Binding RelativeSource={RelativeSource Self}, Path=ActualWidth}"
+            Background="LimeGreen"
+            BorderBrush="Black"
+            BorderThickness="3"
+            CornerRadius="99999" />
+        <TextBlock
+            Name="text"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            FontSize="18"
+            Foreground="White" />
+    </Grid>
+</Window>

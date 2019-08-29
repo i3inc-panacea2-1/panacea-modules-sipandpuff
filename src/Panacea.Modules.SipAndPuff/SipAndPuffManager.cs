@@ -78,7 +78,8 @@ namespace Panacea.Modules.SipAndPuff
         private void _mouseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             var p = Cursor.Position;
-            Cursor.Position = new System.Drawing.Point(p.X + x, p.Y + y);
+            mouse_event(MOUSEEVENTF_MOVE, x, y, 0, UIntPtr.Zero);
+            //Cursor.Position = new System.Drawing.Point(p.X + x, p.Y + y);
             if (_stopwatch.ElapsedMilliseconds > 1000)
             {
                 _stopwatch.Reset();
@@ -103,54 +104,63 @@ namespace Panacea.Modules.SipAndPuff
 
         private void _sharpDx_SipUp(object sender, EventArgs e)
         {
+            _hints.SipUp();
             _sipDown = false;
             _mouseTimer.Stop();
             _scrollTimer.Stop();
         }
 
+        CancellationTokenSource _sipCts, _puffCts;
         private async void _sharpDx_SipDown(object sender, EventArgs e)
         {
+
+            ShowCursor();
+            
             _sipDown = true;
             _sipDownCount++;
-            var count = _sipDownCount;
-
-            await Task.Delay(1000);
-
-            if (count == _sipDownCount)
+            _hints.SipDown(_sipDownCount);
+            _sipCts?.Cancel();
+            var cts = new CancellationTokenSource();
+            _sipCts = cts;
+            if (_sipDownCount < 3)
             {
-                if (count == 1 && !_sipDown)
-                {
-                    DoMouseClick();
-                    _puffDownCount = 0;
-                }
-                else if (_sipDownCount == 1 && _sipDown)
-                {
-                    x = -_step;
-                    y = 0;
-                    _stopwatch.Reset();
-                    _stopwatch.Start();
-                    _mouseTimer.Start();
-                }
-                else if (_sipDownCount == 2 && _sipDown)
-                {
-                    x = 0;
-                    y = -_step;
-                    _stopwatch.Reset();
-                    _stopwatch.Start();
-                    _mouseTimer.Start();
-                }
-                else if (_sipDown)
-                {
-                    dx = -1;
-                    _scrollTimer.Start();
-                }
-                _sipDownCount = 0;
+                await Task.Delay(1000);
             }
+            if (cts.IsCancellationRequested) return;
+
+            if (_sipDownCount == 1 && !_sipDown)
+            {
+                DoMouseClick();
+                _puffDownCount = 0;
+            }
+            else if (_sipDownCount == 1 && _sipDown)
+            {
+                x = -_step;
+                y = 0;
+                _stopwatch.Reset();
+                _stopwatch.Start();
+                _mouseTimer.Start();
+            }
+            else if (_sipDownCount == 2 && _sipDown)
+            {
+                x = 0;
+                y = -_step;
+                _stopwatch.Reset();
+                _stopwatch.Start();
+                _mouseTimer.Start();
+            }
+            else if (_sipDown)
+            {
+                dx = -1;
+                _scrollTimer.Start();
+            }
+            _sipDownCount = 0;
         }
 
         bool _puffDown = false, _sipDown = false;
         private void _sharpDx_PuffUp(object sender, EventArgs e)
         {
+            _hints.PuffUp();
             _puffDown = false;
             _mouseTimer.Stop();
             _scrollTimer.Stop();
@@ -160,56 +170,69 @@ namespace Panacea.Modules.SipAndPuff
         int x, y, dx, dy;
         private async void _sharpDx_PuffDown(object sender, EventArgs e)
         {
+            ShowCursor();
+            
+            _puffCts?.Cancel();
+            var cts = new CancellationTokenSource();
+            _puffCts = cts;
             _puffDown = true;
             _puffDownCount++;
-            var count = _puffDownCount;
+            _hints.PuffDown(_puffDownCount);
 
-            await Task.Delay(1000);
-
-            if (count == _puffDownCount)
+            if (_puffDownCount < 3)
             {
-                if (count == 1 && !_puffDown)
-                {
-                    DoMouseClick();
-                    _puffDownCount = 0;
-                }
-                else if (_puffDownCount == 1 && _puffDown)
-                {
-                    x = _step;
-                    y = 0;
-                    _stopwatch.Reset();
-                    _stopwatch.Start();
-                    _mouseTimer.Start();
-                }
-                else if (_puffDownCount == 2 && _puffDown)
-                {
-                    x = 0;
-                    y = _step;
-                    _stopwatch.Reset();
-                    _stopwatch.Start();
-                    _mouseTimer.Start();
-                }
-                else if (_puffDown)
-                {
-                    dx = 1;
-                    _scrollTimer.Start();
-                }
+                await Task.Delay(1000);
+            }
+            if (cts.IsCancellationRequested) return;
+            if (_puffDownCount == 1 && !_puffDown)
+            {
+                DoMouseClick();
                 _puffDownCount = 0;
             }
+            else if (_puffDownCount == 1 && _puffDown)
+            {
+                x = _step;
+                y = 0;
+                _stopwatch.Reset();
+                _stopwatch.Start();
+                _mouseTimer.Start();
+            }
+            else if (_puffDownCount == 2 && _puffDown)
+            {
+                x = 0;
+                y = _step;
+                _stopwatch.Reset();
+                _stopwatch.Start();
+                _mouseTimer.Start();
+            }
+            else if (_puffDown)
+            {
+                dx = 1;
+                _scrollTimer.Start();
+            }
+            _puffDownCount = 0;
+
         }
 
+        HintWindow _hints;
         public void Start()
         {
             ScreenReader.Activate();
             Debug.WriteLine(ScreenReader.IsScreenReaderRunning());
             //_automationHelper.Start();
             _sharpDx.Start();
-
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                _hints = new HintWindow();
+                _hints.Show();
+            });
+            
             //_keyboardHelper.Start();
         }
 
         public void Stop()
         {
+            _hints.Close();
             ScreenReader.Deactivate();
             Debug.WriteLine(ScreenReader.IsScreenReaderRunning());
             //_automationHelper.Stop();
@@ -225,7 +248,45 @@ namespace Panacea.Modules.SipAndPuff
         private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
         private const int MOUSEEVENTF_RIGHTUP = 0x10;
         private const int MOUSEEVENTF_WHEEL = 0x0800;
+        private const int MOUSEEVENTF_MOVE = 0x0001;
+        [DllImport("user32.dll")]
+        static extern int ShowCursor(bool bShow);
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            public int X;
+            public int Y;
 
+            public POINT(int x, int y)
+            {
+                this.X = x;
+                this.Y = y;
+            }
+
+            public static implicit operator System.Drawing.Point(POINT p)
+            {
+                return new System.Drawing.Point(p.X, p.Y);
+            }
+
+            public static implicit operator POINT(System.Drawing.Point p)
+            {
+                return new POINT(p.X, p.Y);
+            }
+        }
+        [DllImport("user32")]
+        public static extern int SetCursorPos(int x, int y);
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool GetCursorPos(out POINT lpPoint);
+        void ShowCursor()
+        {
+            mouse_event(MOUSEEVENTF_MOVE, 1, 1, 0, UIntPtr.Zero);
+            Thread.Sleep(10);
+            mouse_event(MOUSEEVENTF_MOVE, -1, -1, 0, UIntPtr.Zero);
+        }
+
+        [DllImport("user32.dll")]
+        static extern void mouse_event(Int32 dwFlags, Int32 dx, Int32 dy, Int32 dwData, UIntPtr dwExtraInfo);
 
         public void DoMouseClick()
         {

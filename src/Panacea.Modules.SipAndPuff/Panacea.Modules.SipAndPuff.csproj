@@ -91,6 +91,9 @@
     <Compile Include="AsyncObservableCollection.cs" />
     <Compile Include="AutomationHelper.cs" />
     <Compile Include="DictionaryExtensions.cs" />
+    <Compile Include="HintWindow.xaml.cs">
+      <DependentUpon>HintWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ISipAndPuffInput.cs" />
     <Compile Include="InterfaceCommand.cs" />
     <Compile Include="KeyboardHelper.cs" />
@@ -129,6 +132,10 @@
     <Page Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="HintWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="OverlayWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
