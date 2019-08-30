@@ -55,7 +55,7 @@ namespace Panacea.Modules.SipAndPuff
         public SipAndPuffManager()
         {
             _mouseTimer.Elapsed += _mouseTimer_Elapsed;
-            _mouseTimer.Interval = 18;
+            _mouseTimer.Interval = 30;
 
             _scrollTimer.Elapsed += _scrollTimer_Elapsed;
             _scrollTimer.Interval = 300;
@@ -75,31 +75,37 @@ namespace Panacea.Modules.SipAndPuff
             mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)(dx > 0 ? -120 : 120), 0);
         }
 
+        int _elapsed;
         private void _mouseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
+            _mouseTimer.Stop();
             var p = Cursor.Position;
+           
             mouse_event(MOUSEEVENTF_MOVE, x, y, 0, UIntPtr.Zero);
             //Cursor.Position = new System.Drawing.Point(p.X + x, p.Y + y);
-            if (_stopwatch.ElapsedMilliseconds > 1000)
+            if (_stopwatch.ElapsedMilliseconds > 800)
             {
-                _stopwatch.Reset();
-                if (x != 0 && Math.Abs(x) < _max)
+                _elapsed++;
+                var first = (double)_elapsed;
+                //_stopwatch.Reset();
+                if (x != 0)
                 {
                     if (x > 0)
-                        x++;
+                        x= (int)Math.Ceiling(Math.Pow(first/10.0, 2));
                     else
-                        x--;
+                        x= -(int)Math.Ceiling(Math.Pow(first / 10.0, 2)); ;
 
                 }
-                if (y != 0 && Math.Abs(y) < _max)
+                if (y != 0)
                 {
                     if (y > 0)
-                        y++;
+                        y = (int)Math.Ceiling(Math.Pow(first / 10.0, 2));
                     else
-                        y--;
+                        y = -(int)Math.Ceiling(Math.Pow(first / 10.0, 2)); ;
                 }
-                _stopwatch.Start();
+                //_stopwatch.Start();
             }
+            _mouseTimer.Start();
         }
 
         private void _sharpDx_SipUp(object sender, EventArgs e)
@@ -137,6 +143,7 @@ namespace Panacea.Modules.SipAndPuff
             {
                 x = -_step;
                 y = 0;
+                _elapsed = 0;
                 _stopwatch.Reset();
                 _stopwatch.Start();
                 _mouseTimer.Start();
@@ -145,6 +152,7 @@ namespace Panacea.Modules.SipAndPuff
             {
                 x = 0;
                 y = -_step;
+                _elapsed = 0;
                 _stopwatch.Reset();
                 _stopwatch.Start();
                 _mouseTimer.Start();
@@ -193,6 +201,7 @@ namespace Panacea.Modules.SipAndPuff
             {
                 x = _step;
                 y = 0;
+                _elapsed = 0;
                 _stopwatch.Reset();
                 _stopwatch.Start();
                 _mouseTimer.Start();
@@ -201,6 +210,7 @@ namespace Panacea.Modules.SipAndPuff
             {
                 x = 0;
                 y = _step;
+                _elapsed = 0;
                 _stopwatch.Reset();
                 _stopwatch.Start();
                 _mouseTimer.Start();

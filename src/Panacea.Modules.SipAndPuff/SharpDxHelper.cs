@@ -108,7 +108,8 @@ namespace Panacea.Modules.SipAndPuff
                 catch { }
             })
             {
-                Priority = ThreadPriority.Lowest
+                Priority = ThreadPriority.Lowest,
+                IsBackground = true
             };
             _thread.Start();
             // Poll events from joystick
