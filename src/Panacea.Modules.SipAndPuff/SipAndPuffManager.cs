@@ -80,7 +80,7 @@ namespace Panacea.Modules.SipAndPuff
         const double power = 1.6;
         private void _mouseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            _mouseTimer.Stop();
+         
             var p = Cursor.Position;
 
             mouse_event(MOUSEEVENTF_MOVE, x, y, 0, UIntPtr.Zero);
@@ -107,7 +107,6 @@ namespace Panacea.Modules.SipAndPuff
                 }
                 //_stopwatch.Start();
             }
-            _mouseTimer.Start();
         }
 
         private void _sharpDx_SipUp(object sender, EventArgs e)
