@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -32,7 +33,27 @@ namespace Panacea.Modules.SipAndPuff
         {
             _events = Hook.GlobalEvents();
             _events.MouseMove += _events_MouseMove;
+            var pos = GetMousePosition();
+            this.Left = pos.X + 10;
+            this.Top = pos.Y - 10;
         }
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetCursorPos(ref Win32Point pt);
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct Win32Point
+        {
+            public Int32 X;
+            public Int32 Y;
+        };
+        public static Point GetMousePosition()
+        {
+            Win32Point w32Mouse = new Win32Point();
+            GetCursorPos(ref w32Mouse);
+            return new Point(w32Mouse.X, w32Mouse.Y);
+        }
+
 
         IKeyboardMouseEvents _events;
 
@@ -41,20 +62,29 @@ namespace Panacea.Modules.SipAndPuff
             _events.MouseMove -= _events_MouseMove;
             _events?.Dispose();
         }
+
+
         private void _events_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             this.Left = e.X + 10;
             this.Top = e.Y - 10;
-            Debug.WriteLine(Left + " - " + Top);
         }
 
-        public void PuffDown(int count)
+        public void SetIcon(string icon)
         {
             Dispatcher.Invoke(() =>
             {
                 puff.Visibility = Visibility.Visible;
-                text.Text = count.ToString();
-                text.Visibility = Visibility.Visible;
+                Icon.Icon = icon;
+            });
+        }
+
+        public void PuffDown()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                puff.Visibility = Visibility.Visible;
+                Show();
             });
 
         }
@@ -63,18 +93,18 @@ namespace Panacea.Modules.SipAndPuff
         {
             Dispatcher.Invoke(() =>
             {
+                Icon.Icon = "none";
                 puff.Visibility = Visibility.Collapsed;
-                text.Visibility = Visibility.Collapsed;
+                Hide();
             });
         }
 
-        public void SipDown(int count)
+        public void SipDown()
         {
             Dispatcher.Invoke(() =>
             {
                 sip.Visibility = Visibility.Visible;
-                text.Text = count.ToString();
-                text.Visibility = Visibility.Visible;
+                Show();
             });
         }
 
@@ -82,8 +112,9 @@ namespace Panacea.Modules.SipAndPuff
         {
             Dispatcher.Invoke(() =>
             {
+                Icon.Icon = "none";
                 sip.Visibility = Visibility.Collapsed;
-                text.Visibility = Visibility.Collapsed;
+                Hide();
             });
         }
     }

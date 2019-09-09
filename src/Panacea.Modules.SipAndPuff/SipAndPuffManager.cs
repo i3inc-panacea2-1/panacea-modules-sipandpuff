@@ -76,32 +76,34 @@ namespace Panacea.Modules.SipAndPuff
         }
 
         int _elapsed;
+
+        const double power = 1.6;
         private void _mouseTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             _mouseTimer.Stop();
             var p = Cursor.Position;
-           
+
             mouse_event(MOUSEEVENTF_MOVE, x, y, 0, UIntPtr.Zero);
             //Cursor.Position = new System.Drawing.Point(p.X + x, p.Y + y);
             if (_stopwatch.ElapsedMilliseconds > 800)
             {
                 _elapsed++;
-                var first = (double)_elapsed;
+                var first = (double)_elapsed / 10.0;
                 //_stopwatch.Reset();
                 if (x != 0)
                 {
                     if (x > 0)
-                        x= (int)Math.Ceiling(Math.Pow(first/10.0, 2));
+                        x = (int)Math.Ceiling(Math.Pow(first, power));
                     else
-                        x= -(int)Math.Ceiling(Math.Pow(first / 10.0, 2)); ;
+                        x = -(int)Math.Ceiling(Math.Pow(first, power)); ;
 
                 }
                 if (y != 0)
                 {
                     if (y > 0)
-                        y = (int)Math.Ceiling(Math.Pow(first / 10.0, 2));
+                        y = (int)Math.Ceiling(Math.Pow(first, power));
                     else
-                        y = -(int)Math.Ceiling(Math.Pow(first / 10.0, 2)); ;
+                        y = -(int)Math.Ceiling(Math.Pow(first, power)); ;
                 }
                 //_stopwatch.Start();
             }
@@ -121,26 +123,36 @@ namespace Panacea.Modules.SipAndPuff
         {
 
             ShowCursor();
-            
+
             _sipDown = true;
             _sipDownCount++;
-            _hints.SipDown(_sipDownCount);
+            _hints.SipDown();
+
             _sipCts?.Cancel();
             var cts = new CancellationTokenSource();
             _sipCts = cts;
+            if (_sipDownCount == 1)
+            {
+                _hints.SetIcon("arrow_back");
+            }
+            else if (_sipDownCount == 2)
+            {
+                _hints.SetIcon("arrow_upward");
+            }
+            else if (_sipDownCount == 3)
+            {
+                _hints.SetIcon("vertical_align_top");
+            }
             if (_sipDownCount < 3)
             {
                 await Task.Delay(1000);
             }
             if (cts.IsCancellationRequested) return;
 
-            if (_sipDownCount == 1 && !_sipDown)
-            {
-                DoMouseClick();
-                _puffDownCount = 0;
-            }
+
             else if (_sipDownCount == 1 && _sipDown)
             {
+                _hints.SetIcon("arrow_back");
                 x = -_step;
                 y = 0;
                 _elapsed = 0;
@@ -150,6 +162,7 @@ namespace Panacea.Modules.SipAndPuff
             }
             else if (_sipDownCount == 2 && _sipDown)
             {
+                _hints.SetIcon("arrow_upward");
                 x = 0;
                 y = -_step;
                 _elapsed = 0;
@@ -159,6 +172,7 @@ namespace Panacea.Modules.SipAndPuff
             }
             else if (_sipDown)
             {
+                _hints.SetIcon("vertical_align_top");
                 dx = -1;
                 _scrollTimer.Start();
             }
@@ -179,14 +193,25 @@ namespace Panacea.Modules.SipAndPuff
         private async void _sharpDx_PuffDown(object sender, EventArgs e)
         {
             ShowCursor();
-            
+
             _puffCts?.Cancel();
             var cts = new CancellationTokenSource();
             _puffCts = cts;
             _puffDown = true;
             _puffDownCount++;
-            _hints.PuffDown(_puffDownCount);
-
+            _hints.PuffDown();
+            if (_puffDownCount == 1)
+            {
+                _hints.SetIcon("mouse");
+            }
+            else if (_puffDownCount == 2)
+            {
+                _hints.SetIcon("arrow_downward");
+            }
+            else if (_puffDownCount == 3)
+            {
+                _hints.SetIcon("vertical_align_bottom");
+            }
             if (_puffDownCount < 3)
             {
                 await Task.Delay(1000);
@@ -199,6 +224,7 @@ namespace Panacea.Modules.SipAndPuff
             }
             else if (_puffDownCount == 1 && _puffDown)
             {
+                _hints.SetIcon("arrow_forward");
                 x = _step;
                 y = 0;
                 _elapsed = 0;
@@ -208,6 +234,7 @@ namespace Panacea.Modules.SipAndPuff
             }
             else if (_puffDownCount == 2 && _puffDown)
             {
+                _hints.SetIcon("arrow_downward");
                 x = 0;
                 y = _step;
                 _elapsed = 0;
@@ -218,6 +245,7 @@ namespace Panacea.Modules.SipAndPuff
             else if (_puffDown)
             {
                 dx = 1;
+                _hints.SetIcon("vertical_align_bottom");
                 _scrollTimer.Start();
             }
             _puffDownCount = 0;
@@ -234,9 +262,9 @@ namespace Panacea.Modules.SipAndPuff
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 _hints = new HintWindow();
-                _hints.Show();
+
             });
-            
+
             //_keyboardHelper.Start();
         }
 
