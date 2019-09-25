@@ -59,8 +59,11 @@ namespace Panacea.Modules.SipAndPuff
 
         protected override void OnClosed(EventArgs e)
         {
-            _events.MouseMove -= _events_MouseMove;
-            _events?.Dispose();
+            if (_events != null)
+            {
+                _events.MouseMove -= _events_MouseMove;
+                _events.Dispose();
+            }
         }
 
 
