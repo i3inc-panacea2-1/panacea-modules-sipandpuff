@@ -51,8 +51,7 @@ namespace Panacea.Modules.SipAndPuff
                         // If Joystick not found, throws an error
                         if (joystickGuid == Guid.Empty)
                         {
-                            Debug.WriteLine("No joystick/Gamepad found.");
-                            continue;
+                           throw new Exception("No joystick/Gamepad found.");
                         }
 
                         // Instantiate the joystick
@@ -109,7 +108,7 @@ namespace Panacea.Modules.SipAndPuff
                         }
                     }
                     catch { }
-                    await Task.Delay(3000);
+                    await Task.Delay(15000);
                 }
             })
             {
